@@ -1,0 +1,79 @@
+"""
+Murilo Rocco Cordeiro
+"""
+import dht
+import machine
+import network
+import time
+import urequests
+
+def conexao(ssid, senha):
+    station = network.WLAN(network.STA_IF)
+    station.active(True)
+    station.connect(ssid, senha)
+    for t in range(50):
+        if station.isconnected():
+            break
+        time.sleep(0.1)
+    return station
+
+sensor = dht.DHT11(machine.Pin(13))
+rele = machine.Pin(5,machine.Pin.OUT)
+rele.value(0)
+contadorIf = contadorElse = contadorDados = 0
+
+while True:
+    sensor.measure()
+    temperatura = (sensor.temperature())
+    umidade = (sensor.humidity())
+    print("Aluno: Murilo Rocco Cordeiro")
+    print("Turma: ADS Presencial")
+    print("Diciplina: IOT - Professor: Valmir Filho")
+    print()
+    print("Estação Climatica")
+    print()
+    print("A temperatura atual é; {}°C.".format(temperatura))
+    print("A umidade relativa do ar atual é: {}%.".format(umidade))
+    print()
+    print("Condições para acionamento do Rele: Temp. > 31°C ou Umid. Rel. do Ar >  70%.")
+    print()
+    time.sleep(2)
+    if temperatura > 31 or umidade > 70:
+        rele.value(1)
+        contadorIf += 1
+        print("Rele ligado.")
+        print()
+        print("Numero de impressões no console {}%.".format(contadorIf))
+        print()
+        contadorElse = 0
+    else:
+        rele.value(0)
+        contadorElse += 1
+        print("Rele desligado.")
+        print()
+        print("Numero de impressões no console {}%.".format(contadorElse))
+        print()
+        contadorIf = 0
+    print("Conectando com a rede WIFI...")
+    time.sleep(2)
+    print()
+    print("Conexão de rede WIF realizada com sucesso!")
+    print()
+    station = conexao ("ESTACIO-VISITANTES", "estacio@2014")
+    if not station.isconnected():
+        print("Erro de conexão com a rede WIFI! Tente novamente.")
+        print()
+    else:
+        print("Conexão com a rede WIFI realizada com sucesso!")
+        print("Acessando ThingSpeak...")
+        time.sleep(2)
+        print()
+        print("Enviando dados...")
+        response = urequests.get("https://api.thingspeak.com/update?api_key=R3T6U1NNKAB5SVJP&field1={}&field2={}".format(temperatura,umidade))
+        time.sleep(2)
+        print("Dados enviados com sucesso!")
+        print()
+        response.text
+        station.disconnect()
+        time.sleep(2)
+        
